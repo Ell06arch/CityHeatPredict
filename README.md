@@ -16,32 +16,73 @@ All work presented here is for **personal learning and demonstration** only.
 
 ## Objectives
 
-- Predict UHI intensity using multiple datasets:
-  - Weather data (temperature, humidity, etc.)
-  - Building footprint data
-  - Satellite imagery (Landsat and Sentinel)
-- Analyze model performance across different feature sets
-- Explore the limits of publicly available data in understanding urban heat patterns
-- Investigate which features contribute most to urban heat prediction
+  - Predict UHI intensity using multiple datasets:
+      - Weather data (temperature, humidity, etc.)
+      - Building footprint data
+      - Satellite imagery (Landsat and Sentinel)
+  - Analyze model performance across different feature sets
+  - Explore the limits of publicly available data in understanding urban heat patterns
+  - Investigate which features contribute most to urban heat prediction
 
 ## Key Methods
 
-- **Feature Engineering:** Creation of new, highly informative features such as rates of change and ratios to quantify spatial gradients of urban characteristics.
-- **Multicollinearity Reduction:** Dynamic feature selection using Variance Inflation Factor (VIF) to remove redundant and highly correlated predictors.
-- **Robust Model Evaluation:** Cross-validation with a suite of models including Random Forest, HistGradientBoosting, XGBoost, LightGBM, and ElasticNet.
-- **Model Interpretation:** Analysis of model performance using R² and identification of the most important features driving UHI prediction.
+  - **Feature Engineering:** Creation of new, highly informative features such as rates of change and ratios to quantify spatial gradients of urban characteristics.
+  - **Multicollinearity Reduction:** Dynamic feature selection using Variance Inflation Factor (VIF) to remove redundant and highly correlated predictors.
+  - **Robust Model Evaluation:** Cross-validation with a suite of models including Random Forest, HistGradientBoosting, XGBoost, LightGBM, and ElasticNet.
+  - **Model Interpretation:** Analysis of model performance using R² and identification of the most important features driving UHI prediction.
 
-## Status
+## Current Project Status: A Major Breakthrough in Modeling
 
-This is an **ongoing** project. Milestones so far:
+I have successfully completed a significant milestone by building a powerful model based on ground-level and urban spatial data. The results show a dramatic improvement over a baseline model, confirming that our feature engineering and selection strategies are highly effective.
 
-- Built a baseline model using only weather features (achieving an R² of approximately 0.19).
-- Conducted extensive feature engineering on urban morphological features derived from building footprint data, creating new delta and ratio features to capture spatial dynamics.
-- Drastically improved model performance with a new feature set, with top models achieving a cross-validated R² score of over 0.86.
-- Confirmed that urban morphology at a larger scale (200m buffer) is a primary driver of UHI, surpassing the predictive power of a single buffer distance.
-- Identified the most important features, which will be used as a refined set for the next phase of the project: integrating Landsat and Sentinel data.
+### Key Milestones Completed:
+
+  * **Baseline Model Established:** A simple model using only meteorological features achieved a low R² score (approx. 0.19), confirming the need for more complex features.
+  * **Feature Engineering:** Created new features like `delta` and `ratio` to capture spatial gradients of urban characteristics (e.g., how building density changes from a 50m to a 200m radius).
+  * **Multicollinearity Reduction:** Used an iterative Variance Inflation Factor (VIF) process to reduce feature redundancy and select a lean, high-signal feature set of 13 predictors.
+  * **Robust Model Evaluation:** Used K-fold cross-validation to train a suite of models (XGBoost, HistGradientBoosting, LightGBM, Random Forest, ElasticNet) and obtain reliable, non-overfitted performance metrics.
+
+### Current Results & Key Insights
+
+#### Model Performance (R² Scores)
+
+The cross-validation results demonstrate that tree-based models, particularly gradient boosting algorithms, are exceptionally well-suited for this problem, explaining over 85% of the variance in the UHI Index.
+
+| Model | Mean R² |
+| :--- | :--- |
+| **XGBoost** | **0.8653** |
+| **HistGradientBoosting** | **0.8566** |
+| **LightGBM** | **0.8547** |
+| Random Forest | 0.7471 |
+| ElasticNet (Linear) | 0.1028 |
+
+> **Key Insight:** The linear model's poor performance (R² = 0.1028) confirms that the relationship between urban features and UHI is highly non-linear, validating our use of advanced tree-based models.
+
+#### What Drives Urban Heat? (Feature Importance)
+
+The model's feature importance analysis reveals a clear story about the factors influencing UHI. While meteorological conditions are essential, the most critical drivers are not static urban metrics but rather **how the urban environment changes across different distances.**
+
+Here is a breakdown of the top-ranked features and what they tell us:
+
+| Rank | Feature | Mean Importance | Contextual Interpretation |
+| :--- | :--- | :--- | :--- |
+| 1 | `delta_count_area_200m_50m` | **0.68** | This is the most powerful predictor of UHI in our model. It's an engineered feature that measures the **gradient of urban density** — specifically, the difference in building count and area between the 200m and 50m buffers. This result confirms that **spatial transitions** from dense to less dense areas are a more significant driver of UHI than a single absolute measure of urban density. |
+| 2 | `Temp_1hr_MA` | **0.54** | As expected, the recent ambient temperature is a crucial meteorological input. It serves as a foundational component for the UHI effect, as it sets the baseline thermal conditions upon which other factors build. |
+| 3 | `150m_std_avg_neighbor_dist_ft` | **0.47** | This feature captures the **heterogeneity of building spacing** at the 150m scale. High variability in the distance between buildings can influence airflow, create pockets of trapped heat, and affect thermal patterns more than a uniform, consistent layout. |
+| 4 | `200m_std_area` | **0.45** | Similar to the feature above, this measures the **variability of building sizes** at the 200m scale. A mix of large and small structures creates a complex urban texture that can alter heat absorption and release, making it a strong predictor. |
+| 5 | `Air Temp at Surface degC` | **0.44** | The direct air temperature at the surface is a fundamental component of the UHI phenomenon. This feature, along with `Temp_1hr_MA`, reinforces that to accurately model UHI, a strong meteorological foundation is necessary. |
+
+### Next Steps
+
+The next phase of the project will focus on integrating satellite-derived features from Landsat and Sentinel data. This will be a strategic addition to the current refined feature set, which now includes a powerful blend of meteorological, urban form, and spatial gradient variables.
+
+By building on this robust foundation, we aim to:
+
+  * Incorporate land surface temperature (LST) and vegetation indices (like NDVI) from satellite imagery.
+  * Evaluate how these new features further improve model performance.
+  * Analyze the trade-offs between model complexity, predictive power, and data availability.
 
 ## License
 
 This project is for academic and personal portfolio use only.
-Licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](https://www.google.com/search?q=LICENSE).
