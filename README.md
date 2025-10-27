@@ -4,7 +4,7 @@ This project explores how machine learning and geospatial data can help predict 
 
 ## Background
 
-This started as my submission for the **2025 EY Open Science & Data Challenge**, but the challenge ended before I could submit my best work. Since then, I’ve kept developing it as a portfolio and learning project, because it sits right at the intersection of my interests: **AI, environment, and sustainable urban design**.
+This started as my submission for the **2025 EY Open Science & Data Challenge**, but the challenge ended before I could submit my best work. Since then, I've kept developing it as a portfolio and learning project, because it sits right at the intersection of my interests: **AI, environment, and sustainable urban design**.
 
 ### Data Use Disclaimer
 
@@ -19,54 +19,87 @@ The datasets come from the **2025 EY Open Science & Data Challenge**. I confirme
 
 ## Methods
 
-* **Feature engineering:** spatial gradient and urban form metrics
-* **Multicollinearity reduction:** used VIF to remove redundant features
-* **Spatially robust validation:** clustered buildings into neighborhoods (K=40) and tested models on unseen clusters
+* **Multi-source feature engineering:** urban morphology, weather patterns, and Landsat thermal data
+* **Spatial clustering:** hierarchical clustering using urban form features to prevent data leakage
+* **Advanced spatial features:** 6 engineered complexity metrics for better neighborhood separation
+* **Missing data handling:** geographic-aware imputation for cloud gaps, strategic removal for water bodies
 * **Model suite:** compared tree ensembles (LightGBM, XGBoost, HistGB, Random Forest) and linear baselines
 
-## Current Results: Random vs. Spatially Robust CV
+## Results Evolution: From Basic to Enhanced Spatial Validation
 
-Early experiments with **random cross-validation** suggested very high scores (~0.86 R²), but these were inflated by **spatial leakage** (train/test overlap in nearby buildings).
+The project evolved through two major validation approaches:
 
-To get a more realistic benchmark, I implemented **spatially robust cross-validation**:
+### Phase 1: Basic Spatial Clustering (Urban Morphology Only)
+* **Clustering:** K=100 clusters using 7 basic urban form features
+* **Silhouette Score:** 0.205 (poor separation)
+* **Performance:** Artificially high due to spatial leakage
 
-* Clustered buildings (K=40) in feature space (urban form + meteorology)
-* Used GroupKFold so train/test neighborhoods never overlapped
-* Tested across multiple K values to confirm stability
+| Model        | Mean R² | Std Dev |
+| ------------ | ------- | ------- |
+| **LightGBM** | 0.6544  | 0.035   |
+| **XGBoost**  | 0.6453  | 0.015   |
+| **HistGB**   | 0.6419  | 0.025   |
 
-### Model Performance (Spatially Robust CV, K=40)
+### Phase 2: Enhanced Spatial Clustering (Landsat + Advanced Features)
+* **Clustering:** K=40 clusters using 13 enhanced spatial features  
+* **Silhouette Score:** 0.449 (excellent separation)
+* **Performance:** More realistic generalization estimates
 
-| Model                   | Mean R²    | Std Dev |
-| ----------------------- | ---------- | ------- |
-| **LightGBM**            | **0.3046** | 0.1330  |
-| **XGBoost**             | 0.2849     | 0.1098  |
-| **HistGB**              | 0.2658     | 0.1186  |
-| **RandomForest**        | 0.2563     | 0.1271  |
-| **ElasticNet (Linear)** | 0.0823     | 0.0499  |
+| Model        | Mean R² | Std Dev |
+| ------------ | ------- | ------- |
+| **LightGBM** | 0.4412  | 0.241   |
+| **XGBoost**  | 0.4386  | 0.256   |
+| **HistGB**   | 0.4362  | 0.228   |
 
-> **Key Insight:** Random CV was overly optimistic. Scores under spatial blocking dropped to ~0.25–0.30, which better reflects the *true difficulty* of predicting UHI in unseen districts. Tree ensembles still lead, while linear models collapse.
+**Key Insight:** The 21% performance drop with better clustering reveals the true difficulty of spatial generalization. While scores decreased, this represents more honest model evaluation.
+
+---
+
+## What Drives Urban Heat? Feature Importance Evolution
+
+With Landsat thermal data integration, feature importance shifted significantly while maintaining urban form relevance:
+
+| Rank | Feature | Current Importance | Previously Important | What It Measures |
+| ---- | ------- | ------------------ | -------------------- | ---------------- |
+| 1 | `landsat_lst_mean_200m` | **0.677** | New | Local surface temperature from satellite |
+| 2 | `200m_mean_avg_neighbor_dist_ft` | **0.616** | Yes (0.72) | Average building spacing |
+| 3 | `landsat_lst_median_1000m` | **0.528** | New | Background temperature context |
+| 4 | `Temp_1hr_MA` | **0.466** | Yes (0.46) | Recent temperature trends |
+| 5 | `Air Temp at Surface degC` | **0.452** | Yes (0.46) | Current air temperature |
+| 6 | `uhi_intensity_local` | **0.394** | New | Local vs background heat difference |
+| 7 | `landsat_lst_std_200m` | **0.389** | New | Temperature variability within area |
+
+**Thermal Dominance:** Landsat surface temperature features now dominate importance, validating satellite data's critical role in UHI prediction.
+
+**Urban Form Consistency:** Building spacing remains highly relevant, confirming that physical urban structure significantly influences heat patterns.
+
+**Multi-scale Context:** Both local (200m) and neighborhood (1000m) thermal measurements contribute meaningfully.
 
 ---
 
-## What Drives Urban Heat? (Feature Importance)
+## Technical Achievements
 
-Even under stricter testing, the same features consistently stood out. Together, they highlight how **urban form + meteorology** dominate UHI prediction without relying on coordinates.
+### Data Pipeline Robustness
+- Processed 9,436 buildings with 30 Landsat features across 4 buffer scales
+- Achieved 100% spatial join coverage between training and test sets
+- Implemented geographic-aware missing data handling (90.2% recovery rate)
 
-| Rank | Feature                          | Mean Importance | Interpretation                                                                       |
-| ---- | -------------------------------- | --------------- | ------------------------------------------------------------------------------------ |
-| 1    | `200m_mean_avg_neighbor_dist_ft` | **0.72**        | Average building spacing — denser clusters trap more heat.                           |
-| 2    | `200m_std_avg_neighbor_dist_ft`  | **0.54**        | Variation in spacing — mixed dense/open layouts influence airflow and heat release.  |
-| 3    | `200m_median_area`               | **0.49**        | Typical building size — larger or bulkier buildings affect heat storage and release. |
-| 4    | `Temp_1hr_MA`                    | **0.46**        | Recent temperature trend — short-term heating history matters for prediction.        |
-| 5    | `Air Temp at Surface degC`       | **0.46**        | Current air temperature — the baseline heat in the environment remains influential.  |
+### Spatial Validation Rigor
+- Developed enhanced clustering pipeline with multiple scalers and linkage methods
+- Improved cluster separation by 119% (silhouette: 0.205 → 0.449)
+- Prevented spatial leakage through urban morphology-based grouping
 
----
+### Feature Engineering
+- Created 6 advanced spatial complexity metrics
+- Engineered 4 thermal interaction features (cooling efficiency, heat amplification)
+- Maintained consistent 80/20 train-test split across geographic boundaries
 
 ## Next Steps
 
-* Add multi-scale features from Sentinel and Landsat (NDVI, LST)
-* Validate on true holdout districts
-* Explore spatially adaptive models for more realistic prediction
+* **Sentinel-2 Integration:** Add high-resolution vegetation and land cover data
+* **Temporal Analysis:** Leverage datetime for seasonal pattern recognition  
+* **Spatial Model Refinement:** Explore geographically weighted regression approaches
+* **Feature Interpretation:** Deep dive into thermal-urban form interactions
 
 ## License
 
