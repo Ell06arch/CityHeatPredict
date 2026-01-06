@@ -61,6 +61,9 @@ The project evolved through two major validation approaches:
 - **ElasticNet fails** (negative R²), confirming UHI is **nonlinear and context-dependent**—linear models cannot capture it.  
 - All ensemble models achieve **MAE < 0.01°C** and **MAPE < 1%**, far below typical urban climate modeling thresholds (<1.0°C MAE, <10% MAPE).
 
+**Result Interpretation in Absolute UHI Temperature Terms:**
+The model does not predict temperature in degrees Celsius. It predicts a relative urban thermal intensity score, defined as the local thermal signal normalized by the citywide mean. An MAE of 0.009 therefore means the model’s predictions deviate by less than 1% of the city’s internal thermal contrast, which is sufficient to reliably distinguish urban hotspots from cool-spots. When interpreted against typical intra-urban temperature differences, this relative error corresponds to roughly one degree Celsius of uncertainty, but this mapping is illustrative rather than literal.
+
 ---
 
 ## What Drives Urban Heat? Feature Importance Evolution
